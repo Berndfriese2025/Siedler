@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1f5d4c">
+<title>Würfel-Siedler – Spielstand</title>
+<link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Würfel-Siedler">
+</head>
+<body>
+<header>
+  <h1>Würfel-Siedler</h1>
+  <p>Digitaler Spielstand für das CATAN-Würfelspiel · lokal auf deinem Gerät</p>
+</header>
+
+<main>
+<div id="compatError" class="compat-error"></div>
+
+<section class="card dice-card">
+<div class="dice-head"><div><div class="section-title" style="margin-bottom:3px">Rohstoffwürfel</div><div class="dice-status" id="diceHint">Noch nicht gewürfelt</div></div><div class="roll-count" id="rollCount">Wurf 0 / 3</div></div>
+<div class="dice-grid" id="diceGrid" aria-label="Sechs Rohstoffwürfel"></div>
+<div class="roll-actions"><button class="btn primary roll-btn" id="rollDiceBtn">🎲 Würfeln</button><button class="btn" id="releaseDiceBtn">Alle lösen</button><button class="btn" id="finishDiceBtn" disabled>Ergebnis festlegen</button></div>
+<div class="build-possibilities"><div class="poss-title">Mit diesem Wurf möglich</div><div class="poss-row" id="possibilities"><span class="poss no">Straße</span><span class="poss no">Ritter</span><span class="poss no">Siedlung</span><span class="poss no">Stadt</span></div><div class="combo-box" id="comboBox">Nach dem ersten Wurf zeige ich dir mögliche Bauaktionen und Kombinationen.</div></div>
+</section>
+
+  <section class="card">
+    <div class="row spread">
+      <div>
+        <div class="small">Aktiver Spieler</div>
+        <div id="activeName" style="font-size:21px;font-weight:900">Spieler 1</div>
+      </div>
+      <div style="text-align:right">
+        <div class="small">Gesamt</div>
+        <div class="scorebig" id="totalScore">0</div>
+      </div>
+    </div>
+    <div class="player-tabs" id="playerTabs" style="margin-top:12px"></div>
+  </section>
+
+  <section class="card">
+    <div class="row spread">
+      <div class="section-title" style="margin:0">Aktueller Zug <span id="turnLabel">1 / 15</span></div>
+      <button class="btn" id="undoBtn">↶ Rückgängig</button>
+    </div>
+    <div class="build-grid" style="margin-top:10px">
+      <button class="build ready" data-build="road"><strong>🛣 Straße</strong><span>1 Punkt · fortlaufend</span></button>
+      <button class="build ready" data-build="knight"><strong>🛡 Ritter</strong><span>1–6 Punkte · der Reihe nach</span></button>
+      <button class="build ready" data-build="settlement"><strong>⌂ Siedlung</strong><span>3 · 4 · 5 · 7 · 9 · 11</span></button>
+      <button class="build ready" data-build="city"><strong>🏛 Stadt</strong><span>7 · 12 · 20 · 30</span></button>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <button class="btn primary" id="finishTurn">Zug abschließen</button>
+      <button class="btn danger" id="penaltyTurn">Nichts gebaut (−2)</button>
+    </div>
+    <div class="small" id="turnPending" style="margin-top:8px">In diesem Zug: 0 Punkte</div>
+  </section>
+
+  <section class="card">
+    <div class="section-title">Insel · antippen zum Erfassen</div>
+    <div class="board" id="board">
+  <svg id="islandSvg" viewBox="0 0 600 500" role="img" aria-label="Spielinsel des CATAN-Würfelspiels">
+    <rect class="sea" width="600" height="500"/>
+
+    <!-- Eigenständige Grafik auf Basis der tatsächlichen Spielplan-Topologie -->
+    <g id="terrainLayer">
+      <polygon class="hex field"    points="231,60 300,100 300,180 231,220 162,180 162,100"/>
+      <polygon class="hex mountain" points="369,60 438,100 438,180 369,220 300,180 300,100"/>
+
+      <polygon class="hex pasture"  points="161,180 230,220 230,300 161,340 92,300 92,220"/>
+      <polygon class="hex desert"   points="439,180 508,220 508,300 439,340 370,300 370,220"/>
+
+      <polygon class="hex forest"   points="231,300 300,340 300,420 231,460 162,420 162,340"/>
+      <polygon class="hex hill"     points="369,300 438,340 438,420 369,460 300,420 300,340"/>
+
+      <polygon class="central-sea" points="300,180 369,220 369,300 300,340 231,300 231,220"/>
+    </g>
+
+    <g id="routeBackdrop"></g>
+    <g id="roadsLayer"></g>
+    <g id="knightsLayer"></g>
+    <g id="settlementsLayer"></g>
+    <g id="citiesLayer"></g>
+  </svg>
+</div>
+    <div class="legend"><span><i class="dot"></i>gebaut</span><span>Ritter nochmals antippen = Joker verbraucht</span></div>
+  </section>
+
+  <section class="card">
+    <div class="section-title">Siegpunktleiste</div>
+    <div class="turns" id="turns"></div>
+    <div class="small" style="margin-top:8px">Nach 15 Zügen wird automatisch summiert. Ein × zählt −2 Punkte.</div>
+  </section>
+
+  <section class="card">
+    <div class="row spread">
+      <button class="btn" id="newGameBtn">Neues Spiel</button>
+      <button class="btn" id="renameBtn">Spieler ändern</button>
+      <button class="btn" id="exportBtn">Spielstand kopieren</button>
+    </div>
+    <div class="small" id="storageInfo" style="margin-top:10px">Der Spielstand wird automatisch im Browser gespeichert. Es werden keine Daten übertragen.</div>
+  </section>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<dialog id="playerDialog">
+ <div class="modal">
+  <h2>Spieler</h2>
+  <div class="small">1 bis 4 Namen, leere Felder werden ignoriert.</div>
+  <div id="nameFields" style="display:grid;gap:8px;margin-top:12px"></div>
+  <div class="row" style="margin-top:14px">
+   <button class="btn primary" id="savePlayers">Übernehmen</button>
+   <button class="btn" onclick="if(typeof playerDialog.close===&quot;function&quot;){playerDialog.close()}else{playerDialog.removeAttribute(&quot;open&quot;)}">Abbrechen</button>
+  </div>
+ </div>
+</dialog>
+
+<script src="app.js" defer></script>
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./service-worker.js").catch(() => {});
+  });
+}
+</script>
+</body>
+</html>
