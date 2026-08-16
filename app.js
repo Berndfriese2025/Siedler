@@ -97,8 +97,8 @@ const roadDefs=[
  {a:[162,180],b:[231,220]},
  {a:[92,220], b:[162,180]},
  {a:[92,220], b:[92,300]},
- {a:[92,300], b:[161,340]},
- {a:[161,340],b:[230,300]},
+ {a:[92,300], b:[162,340]},
+ {a:[162,340],b:[230,300]},
  {a:[230,300],b:[300,340]},
  {a:[300,340],b:[369,300]},
  {a:[369,300],b:[439,340]},
@@ -115,7 +115,7 @@ const settlementDefs=[
  [369,220,3],
  [231,220,4],
  [92,220,5],
- [161,340,7],
+ [162,340,7],
  [300,340,9],
  [439,340,11]
 ];
@@ -212,7 +212,10 @@ function createBoard(){
 
 function nextIndex(arr){return arr.findIndex(x=>!x)}
 function pointsFor(type,i){return type==="road"?1:type==="knight"?KNIGHT_POINTS[i]:type==="settlement"?SETTLEMENT_POINTS[i]:CITY_POINTS[i]}
-function sameNode(a,b){return a[0]===b[0] && a[1]===b[1]}
+function sameNode(a,b){
+ const tolerance=2;
+ return Math.abs(a[0]-b[0])<=tolerance && Math.abs(a[1]-b[1])<=tolerance;
+}
 function roadConnected(i,pl){
  const r=roadDefs[i];
  return roadDefs.some((built,j)=>{
@@ -222,7 +225,7 @@ function roadConnected(i,pl){
 }
 function roadTouchesPoint(i,x,y){
  const r=roadDefs[i];
- return (r.a[0]===x&&r.a[1]===y)||(r.b[0]===x&&r.b[1]===y);
+ return sameNode(r.a,[x,y]) || sameNode(r.b,[x,y]);
 }
 function anyBuiltRoadTouches(pl,x,y){
  return roadDefs.some((r,i)=>pl.roads[i] && roadTouchesPoint(i,x,y));
